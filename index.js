@@ -1,39 +1,5 @@
-function add(a, b) { return a + b }
-function sub(a, b) { return a - b }
-function mul(a, b) { return a * b }
-function div(a, b) { return a / b }
-
-function identifyf(i) {
-  return function() {
-    return i;
-  };
-}
-
-function liftf(f) {
-  return function(a) {
-    return function(b) {
-      return f(a, b);
-    };
-  };
-}
-
-function curry(f, a) {
-  return function(b) {
-    return f(a, b);
-  };
-}
-
-function twice(f) {
-  return function(i) {
-    return f(i, i);
-  };
-}
-
-function reverse(f) {
-  return function(a, b) {
-    return f(b, a);
-  };
-}
+const { add, sub, mul, div } = require('./libs/maths');
+const  { identifyf, liftf, curry, twice, reverse } = require('./libs/basic');
 
 function composeu(f1, f2) {
   return function (i) {
@@ -152,6 +118,66 @@ function revocable(f) {
   }
 }
 
+function m(value, source) {
+  return {
+    value: value,
+    source: (typeof source === 'string') ? source : String(value)
+  };
+}
+
+function addm(m1, m2) {
+  return m(
+    m1.value + m2.value,
+    `(${m1.source}+${m2.source})`
+  );
+}
+
+function liftm(binary, ops) {
+  return function (m1, m2) {
+    return m(
+      (typeof m1 === 'number' && typeof m2 === 'number') ? binary(m1, m2) : binary(m1.value, m2.value),
+      (typeof m1 === 'number' && typeof m2 === 'number') ? `(${m1}${ops}{m2})` : `(${m1.source}${ops}${m2.source})`
+    );
+  };
+}
+
+function exp(i) {
+  if (typeof i === 'number') {
+    return i;
+  }
+  return i[0](exp(i[1]), exp(i[2]));
+}
+
+function addg(i) {
+  function more(n) {
+    if (n === undefined) {
+      return i;
+    }
+    
+    i += n;
+    return more;
+  }
+  if (i != undefined) {
+    return more;
+  }
+}
+
+function liftg(binary) {
+  function more(n) {
+     if (n === undefined) {
+      return i;
+    }
+    
+    binary(i, n);
+    return more;
+  }
+  return function(i) {
+    if (i != undefined) {
+      return more;
+    }
+  }
+}
+
 // var three = identifyf(3);
 // console.log(three());
 
@@ -213,9 +239,19 @@ console.log(composeu(doubl, sqrt)(5));
 // console.log(d());
 // console.log(d());
 // console.log(u());
-console.log("REV");
-var rev = revocable(add), add_rev = rev.invoke;
+// console.log("REV");
+// var rev = revocable(add), add_rev = rev.invoke;
+//
+// console.log(add_rev(3, 4));
+// rev.revoke();
+// console.log(add_rev(3, 4));
 
-console.log(add_rev(3, 4));
-rev.revoke();
-console.log(add_rev(3, 4));
+console.log(addm(m(3), m(4)));
+
+console.log(liftm(add, '+')(m(3), m(4)));
+
+console.log(exp([mul, 5, 2]))
+// console.log(exp([add, [mul, 5, 2]]))
+
+console.log(addg(2)(0)(5)());
+console.log(liftg(mul)(3)(1)(4)());
