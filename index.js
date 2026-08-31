@@ -163,19 +163,29 @@ function addg(i) {
 }
 
 function liftg(binary) {
-  function more(n) {
-     if (n === undefined) {
-      return i;
+    return function(i) {
+        function more(n) {
+            if (n === undefined) { return i; }
+            i = binary(i, n);
+            return more;
+        }
+        if (i != undefined) { return more; }
     }
-    
-    binary(i, n);
-    return more;
-  }
-  return function(i) {
-    if (i != undefined) {
-      return more;
+}
+
+function arrayg(x) {
+    var arr = [x];
+    return function pushi(i) {
+        if (i === undefined) { return arr; }
+        arr.push(i);
+        return pushi;
     }
-  }
+}
+
+function continuize(unary) {
+    return function (cb, i) {
+        cb(unary(i));
+    };
 }
 
 // var three = identifyf(3);
@@ -255,3 +265,5 @@ console.log(exp([mul, 5, 2]))
 
 console.log(addg(2)(0)(5)());
 console.log(liftg(mul)(3)(1)(4)());
+console.log(arrayg(3)(4)(5)());
+continuize(Math.sqrt)(console.log, 81);
